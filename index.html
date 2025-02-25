@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Three.js OBJ Loader from URL</title>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/OBJLoader.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
+		<style>
+			body {
+				margin: 0;
+				overflow: hidden;
+			}
+			canvas {
+				display: block;
+			}
+		</style>
+	</head>
+	<body>
+		<script>
+			// Создание сцены
+			const scene = new THREE.Scene()
+			const camera = new THREE.PerspectiveCamera(
+				75,
+				window.innerWidth / window.innerHeight,
+				0.1,
+				1000
+			)
+			const renderer = new THREE.WebGLRenderer({ antialias: true })
+			renderer.setSize(window.innerWidth, window.innerHeight)
+			document.body.appendChild(renderer.domElement)
+
+			// Освещение
+			const light = new THREE.DirectionalLight(0xffffff, 1)
+			light.position.set(1, 1, 1).normalize()
+			scene.add(light)
+
+			// Контроллер для перемещения камеры
+			const controls = new THREE.OrbitControls(camera, renderer.domElement)
+			controls.enableDamping = true
+			controls.dampingFactor = 0.05
+			controls.screenSpacePanning = false
+			controls.minDistance = 1
+			controls.maxDistance = 10
+
+			// Создание базового материала
+			const material = new THREE.MeshStandardMaterial({
+				color: 0x00ff00,
+				metalness: 0.5,
+				roughness: 0.5,
+			})
+
+			// URL модели
+			const modelUrl =
+				'https://gitlab.com/sevkaCode/modelobj/-/raw/main/model.obj?inline=false' // Замените на вашу ссылку
+
+			// Загрузка OBJ модели
+			const loader = new THREE.OBJLoader()
+			loader.load(
+				modelUrl,
+				function (object) {
+					object.traverse(function (child) {
+						if (child.isMesh) {
+							child.material = material // Применяем материал ко всем мешам
+						}
+					})
+					object.position.set(0, 0, 0) // Центрирование модели
+					scene.add(object)
+				},
+				function (xhr) {
+					console.log((xhr.loaded / xhr.total) * 100 + '% загружено')
+				},
+				function (error) {
+					console.error('Ошибка загрузки модели', error)
+				}
+			)
+
+			camera.position.z = 5
+
+			// Анимация
+			function animate() {
+				requestAnimationFrame(animate)
+				controls.update()
+				renderer.render(scene, camera)
+			}
+			animate()
+
+			// Адаптация к изменению размера окна
+			window.addEventListener('resize', function () {
+				const width = window.innerWidth
+				const height = window.innerHeight
+				renderer.setSize(width, height)
+				camera.aspect = width / height
+				camera.updateProjectionMatrix()
+			})
+		</script>
+	</body>
+</html>
